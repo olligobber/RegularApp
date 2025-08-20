@@ -95,7 +95,7 @@ handleAction Compare = do
   input1 <- State.gets _.regex1Entry
   case parseRegex input1 of
     Left e -> do
-      _ <- State.modify $ _ { lastOutput = "Error parsing regex 1: " <> parseErrorMessage e  }
+      _ <- State.modify $ _ { lastOutput = "Error parsing regex 1: " <> parseErrorMessage e }
       pure unit
     Right regex1 -> do
       input2 <- State.gets _.regex2Entry
@@ -116,10 +116,10 @@ handleAction Compare = do
                 _ <- State.modify $ _ { lastOutput = "Error comparing DFAs, this should never happen" }
                 pure unit
               Just symdiff -> if DFA.isEmpty symdiff then do
-                  _ <- State.modify $ _ { lastOutput = "These regex are equivalent" }
+                  _ <- State.modify $ _ { lastOutput = "The regex " <> input1 <> " and " <> input2 <> " are equivalent" }
                   pure unit
                 else do
-                  _ <- State.modify $ _ { lastOutput = "These regex recognise different languages" }
+                  _ <- State.modify $ _ { lastOutput = "The regex " <> input1 <> " and " <> input2 <> " recognise different languages" }
                   pure unit
 handleAction None = pure unit
 

@@ -26275,7 +26275,7 @@
                             ;
                           }
                           ;
-                          $88.lastOutput = "These regex are equivalent";
+                          $88.lastOutput = "The regex " + (input1 + (" and " + (input22 + " are equivalent")));
                           return $88;
                         }))(function() {
                           return pure14(unit);
@@ -26291,27 +26291,27 @@
                           ;
                         }
                         ;
-                        $91.lastOutput = "These regex recognise different languages";
+                        $91.lastOutput = "The regex " + (input1 + (" and " + (input22 + " recognise different languages")));
                         return $91;
                       }))(function() {
                         return pure14(unit);
                       });
                     }
                     ;
-                    throw new Error("Failed pattern match at Main (line 114, column 26 - line 123, column 28): " + [v5.constructor.name]);
+                    throw new Error("Failed pattern match at Main (line 115, column 26 - line 124, column 28): " + [v5.constructor.name]);
                   }
                   ;
-                  throw new Error("Failed pattern match at Main (line 110, column 24 - line 123, column 28): " + [v4.constructor.name]);
+                  throw new Error("Failed pattern match at Main (line 111, column 24 - line 124, column 28): " + [v4.constructor.name]);
                 }
                 ;
-                throw new Error("Failed pattern match at Main (line 106, column 25 - line 123, column 28): " + [v3.constructor.name]);
+                throw new Error("Failed pattern match at Main (line 107, column 25 - line 124, column 28): " + [v3.constructor.name]);
               }
               ;
-              throw new Error("Failed pattern match at Main (line 102, column 7 - line 123, column 28): " + [v2.constructor.name]);
+              throw new Error("Failed pattern match at Main (line 103, column 7 - line 124, column 28): " + [v2.constructor.name]);
             });
           }
           ;
-          throw new Error("Failed pattern match at Main (line 96, column 3 - line 123, column 28): " + [v1.constructor.name]);
+          throw new Error("Failed pattern match at Main (line 97, column 3 - line 124, column 28): " + [v1.constructor.name]);
         });
       });
     }
