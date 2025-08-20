@@ -6,13 +6,14 @@ module Regex (
 ) where
 
 import Prelude (
-  (==), (&&), (||), (<$), (<$>), ($), (>>>), (<*),
+  (==), (&&), (||), (<$), (<$>), ($), (>>>), (<*), (*>),
   unit, bind, discard, pure,
   class Eq, Unit
   )
 import Control.Alt ((<|>))
 import Control.Lazy (class Lazy, defer)
-import Data.Foldable (any, length)
+import Data.Foldable (any, length, foldl)
+import Data.Semigroup.Foldable (foldl1)
 import Data.Array ((..), take, drop)
 import Data.CodePoint.Unicode as U
 import Data.Either (Either)
@@ -45,41 +46,6 @@ parseString (Star r) string = any
   (0..length string)
 parseString _ _ = false
 
-{-
-Top level regex
-R := V
-
-Simple := Empty | Epsilon | Char
-Concat := C C
-Union := V U V
-Star := S *
-
-Things that can be starred
-S :=
-  Simple |
-  ( Concat ) |
-  ( Union ) |
-  ( Star ) |
-  Star
-
-Things that can be catted
-C := Simple |
-  ( Concat ) |
-  ( Union ) |
-  ( Star ) |
-  Star |
-  Concat
-
-Things that can be unioned
-V := Simple |
-  ( Concat ) |
-  ( Union ) |
-  ( Star ) |
-  Star |
-  Concat |
-  Union
--}
-
 validChar :: Char -> Boolean
 validChar char =
   U.isAscii (codePointFromChar char) &&
@@ -88,7 +54,7 @@ validChar char =
 type RegexParser = Parser String (Regex Char)
 
 parseRegex :: String -> Either ParseError (Regex Char)
-parseRegex s = runParser s $ parseUnionable <* PS.eof
+parseRegex s = runParser s $ parseUnion <* PS.eof
   where
   parseEmpty :: RegexParser
   parseEmpty = Empty <$ PS.char '∅'
@@ -112,42 +78,24 @@ parseRegex s = runParser s $ parseUnionable <* PS.eof
   parseSimple = parseEmpty <|> parseEpsilon <|> parseChar
 
   parseConcat :: Lazy RegexParser => RegexParser
-  parseConcat = do
-    left <- defer \_ -> parseConcatable
-    parseSpaces
-    right <- defer \_ -> parseConcatable
-    pure $ Concat left right
-
-  parseUnion :: Lazy RegexParser => RegexParser
-  parseUnion = do
-    left <- defer \_ -> parseUnionable
-    parseSpaces
-    _ <- PS.char '|'
-    parseSpaces
-    right <- defer \_ -> parseUnionable
-    pure $ Union left right
+  parseConcat =
+    foldl1 Concat <$> PC.many1 (defer \_ -> parseStar <* parseSpaces)
 
   parseStar :: Lazy RegexParser => RegexParser
   parseStar = do
-    contents <- defer \_ -> parseStarrable
-    parseSpaces
-    _ <- PS.char '*'
-    pure $ Star contents
+    contents <- parseSimple <|> defer \_ -> parseBracketed
+    stars <- PC.many (parseSpaces *> PS.char '*')
+    pure $ foldl (\r _ -> Star r) contents stars
 
-  parseStarrable :: Lazy RegexParser => RegexParser
-  parseStarrable =
-    PC.try parseSimple <|>
-    PC.try (bracket parseConcat) <|>
-    PC.try (bracket parseUnion) <|>
-    PC.try (bracket parseStar) <|>
-    PC.try parseStar
+  parseUnion :: Lazy RegexParser => RegexParser
+  parseUnion = do
+    first <- defer \_ -> parseConcat
+    rest <- PC.many $
+      parseSpaces *>
+      PS.char '|' *>
+      parseSpaces *>
+      (defer \_ -> parseConcat)
+    pure $ foldl Union first rest
 
-  parseConcatable :: Lazy RegexParser => RegexParser
-  parseConcatable =
-    PC.try parseStarrable <|>
-    PC.try parseConcat
-
-  parseUnionable :: Lazy RegexParser => RegexParser
-  parseUnionable =
-    PC.try parseConcatable <|>
-    PC.try parseUnion
+  parseBracketed :: Lazy RegexParser => RegexParser
+  parseBracketed = bracket $ parseSpaces *> parseUnion <* parseSpaces
