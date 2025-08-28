@@ -2,11 +2,11 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::Hash;
 
 pub struct Dfa<State, Char> {
-	states: HashSet<State>,
-	alphabet: HashSet<Char>,
-	start_state: State,
-	transitions: HashMap<(State, Char), State>,
-	accepting: HashSet<State>,
+	pub states: HashSet<State>,
+	pub alphabet: HashSet<Char>,
+	pub start_state: State,
+	pub transitions: HashMap<(State, Char), State>,
+	pub accepting: HashSet<State>,
 }
 
 impl<State, Char> Dfa<State, Char>

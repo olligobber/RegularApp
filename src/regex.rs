@@ -1,4 +1,4 @@
-enum Regex<Char> {
+pub enum Regex<Char> {
 	Empty,
 	Epsilon,
 	Character(Char),
@@ -13,12 +13,12 @@ impl<Char> Regex<Char>
 where
 	Char: Eq,
 {
-	fn parse_string(&self, string: &[Char]) -> bool {
+	pub fn parse_string(&self, string: &[Char]) -> bool {
 		match self {
 			Empty => { false },
-			Epsilon => { string.len() == 0 },
+			Epsilon => { string.is_empty() },
 			Character(char) => {
-				string.into_iter().all(|c| *c == *char) &&
+				string.iter().all(|c| *c == *char) &&
 				string.len() == 1
 			},
 			Concat(left, right) => {
@@ -46,7 +46,7 @@ where
 		}
 	}
 
-	fn parse_regex(string: &String) -> Regex<char> {
+	// fn parse_regex(string: &str) -> Regex<char> {
 
-	}
+	// }
 }
