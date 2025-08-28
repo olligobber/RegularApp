@@ -2,7 +2,6 @@ use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
 use std::hash::Hash;
 
 use crate::dfa::Dfa;
-use crate::nfa;
 use crate::nfa::Nfa;
 use crate::regex::Regex;
 
@@ -90,23 +89,30 @@ where
 	Char: Eq + Hash + Clone
 {
 	match regex {
-		Regex::Empty => { nfa::empty(alphabet).relabel_states() }
-		Regex::Epsilon => { nfa::epsilon(alphabet).relabel_states() }
+		Regex::Empty => { Nfa::empty(alphabet).relabel_states() }
+		Regex::Epsilon => { Nfa::epsilon(alphabet).relabel_states() }
 		Regex::Character(char) =>
-			{ nfa::character(alphabet, char.clone()).relabel_states() }
+			{ Nfa::character(alphabet, char.clone()).relabel_states() }
 		Regex::Concat(left, right) => {
 			let left_nfa = regex_to_nfa(left, alphabet.clone());
 			let right_nfa = regex_to_nfa(right, alphabet);
-			nfa::concatenation(&left_nfa, &right_nfa).relabel_states()
+			Nfa::concatenation(&left_nfa, &right_nfa).relabel_states()
 		}
 		Regex::Union(left, right) => {
 			let left_nfa = regex_to_nfa(left, alphabet.clone());
 			let right_nfa = regex_to_nfa(right, alphabet);
-			nfa::union(&left_nfa, &right_nfa).relabel_states()
+			Nfa::union(&left_nfa, &right_nfa).relabel_states()
 		}
 		Regex::Star(contents) => {
 			let contents_nfa = regex_to_nfa(contents, alphabet);
 			contents_nfa.star().relabel_states()
 		}
 	}
+}
+
+pub fn regex_to_dfa<Char>(regex: &Regex<Char>, alphabet: HashSet<Char>) -> Dfa<u64, Char>
+where
+	Char: Eq + Hash + Clone
+{
+	nfa_to_dfa(&regex_to_nfa(regex, alphabet)).relabel_states()
 }
