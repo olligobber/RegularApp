@@ -1,8 +1,30 @@
 [package]
-name = "regular_app"
+name = "regular-app"
 version = "0.1.0"
-edition = "2024"
+authors = ["olligobber <sirolligobbervii@yahoo.com.au>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dioxus = { version = "0.6.0", features = ["fullstack"] }
 map-macro = "0.3.0"
 nom = "8.0.0"
+
+[features]
+default = ["web"]
+web = ["dioxus/web"]
+desktop = ["dioxus/desktop"]
+mobile = ["dioxus/mobile"]
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
