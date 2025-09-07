@@ -31,17 +31,28 @@ fn compare(string1: &str, string2: &str, alphabet: &str) -> String {
 		|e| format!("Error parsing Regex 1: {}", e),
 		|regex1| Regex::parse_regex(string2).map_or_else(
 			|e| format!("Error parsing Regex 2: {}", e),
-			|regex2|
-				if
-					regex_to_dfa(&regex1, HashSet::from_iter(alphabet.chars()))
-						.equivalent(&regex_to_dfa(&regex2, HashSet::from_iter(alphabet.chars())))
-				{
-					format!("The regex \"{}\" and \"{}\" are equivalent", string1, string2)
-				} else {
-					format!("The regex \"{}\" and \"{}\" are not equivalent", string1, string2)
-				}
+			|regex2| regex_to_dfa(&regex1, HashSet::from_iter(alphabet.chars()))
+				.map_or_else(
+					|e| format!("Error processing Regex 1: character not in alphabet: {}", e),
+					|dfa1| regex_to_dfa(&regex2, HashSet::from_iter(alphabet.chars()))
+						.map_or_else(
+							|e| format!("Error processing Regex 2: character not in alphabet: {}", e),
+							|dfa2|
+								if dfa1.equivalent(&dfa2) {
+									format!("The regex \"{}\" and \"{}\" are equivalent", string1, string2)
+								} else {
+									format!("The regex \"{}\" and \"{}\" are not equivalent", string1, string2)
+								}
+						)
+				)
 			)
 	)
+}
+
+fn format(string: &str) -> String {
+	string
+		.replace("\\epsilon", "ε")
+		.replace("\\empty", "∅")
 }
 
 #[component]
@@ -60,6 +71,7 @@ fn RegexApp() -> Element {
 					oninput: move |event| async move {
 						alphabet.set(event.value());
 					},
+					autocomplete: "off"
 				}
 				"}}"
 			}
@@ -68,16 +80,24 @@ fn RegexApp() -> Element {
 				"Regex 1 = "
 				input {
 					oninput: move |event| async move {
-						regex1.set(event.value());
-					}
+						regex1.set(format(&event.value()));
+					},
+					value: {
+						format!("{}",regex1.read())
+					},
+					autocomplete: "off"
 				}
 			}
 			p {
 				"Regex 2 = "
 				input {
 					oninput: move |event| async move {
-						regex2.set(event.value());
-					}
+						regex2.set(format(&event.value()));
+					},
+					value: {
+						format!("{}",regex2.read())
+					},
+					autocomplete: "off"
 				}
 			}
 			button {

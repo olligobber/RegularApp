@@ -104,7 +104,8 @@ where
 	where
 		State2: Eq + Hash + Clone,
 	{
-		Dfa::symmetric_difference(self, other).is_empty()
+		Dfa::symmetric_difference(self, other)
+			.is_some_and(|d| d.is_empty())
 	}
 
 	pub fn relabel_states(&self) -> Dfa<u64, Char> {
@@ -200,8 +201,10 @@ where
 	// product(a, b, f) accepts a string if f(a accepts, b accepts)
 	pub fn product
 		(first: &Dfa<State1, Char>, second: &Dfa<State2, Char>, func: fn(bool, bool) -> bool)
-		-> Dfa<(State1, State2), Char> {
-		assert!(first.alphabet == second.alphabet, "Cannot product DFA with different alphabets");
+		-> Option<Dfa<(State1, State2), Char>> {
+		if first.alphabet != second.alphabet {
+			return None
+		}
 		let mut new_states : HashSet<(State1, State2)> = HashSet::new();
 		for state1 in &first.states {
 			for state2 in &second.states {
@@ -225,39 +228,44 @@ where
 				new_accepting.insert((state.clone(), state2.clone()));
 			}
 		}
-		Dfa
+		Some(Dfa
 			{ states: new_states
 			, alphabet: first.alphabet.clone()
 			, start_state: (first.start_state.clone(), second.start_state.clone())
 			, transitions: new_transitions
 			, accepting: new_accepting
 			}
+		)
 	}
 
 	// Construct a DFA that accepts strings that at least one of two DFAs accepts
 	pub fn union
-		(first: &Dfa<State1, Char>, second: &Dfa<State2, Char>) -> Dfa<(State1, State2), Char>
+		(first: &Dfa<State1, Char>, second: &Dfa<State2, Char>)
+		-> Option<Dfa<(State1, State2), Char>>
 	{
 		Dfa::product(first, second, |a, b| a || b)
 	}
 
 	// Construct a DFA that accepts strings that both of two DFAs accepts
 	pub fn intersection
-		(first: &Dfa<State1, Char>, second: &Dfa<State2, Char>) -> Dfa<(State1, State2), Char>
+		(first: &Dfa<State1, Char>, second: &Dfa<State2, Char>)
+		-> Option<Dfa<(State1, State2), Char>>
 	{
 		Dfa::product(first, second, |a, b| a && b)
 	}
 
 	// Construct a DFA that accepts strings that the first DFA accepts and the second doesn't
 	pub fn difference
-		(first: &Dfa<State1, Char>, second: &Dfa<State2, Char>) -> Dfa<(State1, State2), Char>
+		(first: &Dfa<State1, Char>, second: &Dfa<State2, Char>)
+		-> Option<Dfa<(State1, State2), Char>>
 	{
 		Dfa::product(first, second, |a, b| a & !b)
 	}
 
 	// Construct a DFA that accepts strings that exactly one of two DFAs accepts
 	pub fn symmetric_difference
-		(first: &Dfa<State1, Char>, second: &Dfa<State2, Char>) -> Dfa<(State1, State2), Char>
+		(first: &Dfa<State1, Char>, second: &Dfa<State2, Char>)
+		-> Option<Dfa<(State1, State2), Char>>
 	{
 		Dfa::product(first, second, |a, b| a != b)
 	}

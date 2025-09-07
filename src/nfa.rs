@@ -320,9 +320,9 @@ where
 	Char: Eq + Hash,
 {
 	// NFA that accepts a single string, which is a single character
-	pub fn character(alphabet: HashSet<Char>, char: Char) -> Nfa<bool, Char> {
-		assert!(alphabet.contains(&char), "Character should be in alphabet");
-		Nfa
+	pub fn character(alphabet: HashSet<Char>, char: Char) -> Result<Nfa<bool, Char>, Char> {
+		if !alphabet.contains(&char) { return Err(char) }
+		Ok(Nfa
 			{ states: HashSet::from([false, true])
 			, alphabet
 			, start_state: false
@@ -332,6 +332,7 @@ where
 			, epsilon_transitions: HashMap::new()
 			, accepting: HashSet::from([true])
 			}
+		)
 	}
 }
 
@@ -344,9 +345,9 @@ where
 	// NFA that recognises the concatenation of two NFAs
 	pub fn concatenation
 		(left : &Nfa<State1, Char>, right : &Nfa<State2, Char>)
-		-> Nfa<ConcatState<State1, State2>, Char>
+		-> Option<Nfa<ConcatState<State1, State2>, Char>>
 	{
-		assert!(left.alphabet == right.alphabet, "Alphabets must be equal!");
+		if left.alphabet != right.alphabet { return None }
 
 		type StateSet<A, B> = HashSet<ConcatState<A, B>>;
 		type Transition<A, B, Char> = HashMap<(ConcatState<A, B>, Char), StateSet<A, B>>;
@@ -404,7 +405,7 @@ where
 				.or_default()
 				.insert(ConcatState::Right(right.start_state.clone()));
 		}
-		Nfa
+		Some(Nfa
 			{ states
 			, alphabet: left.alphabet.clone()
 			, start_state: ConcatState::Left(left.start_state.clone())
@@ -417,6 +418,7 @@ where
 					.map(|s| ConcatState::Right(s.clone()))
 					.collect::<StateSet<State1, State2>>()
 			}
+		)
 	}
 }
 
@@ -429,9 +431,9 @@ where
 	// NFA that accepts anything that either NFA accepts
 	pub fn union
 		(first : &Nfa<State1, Char>, second : &Nfa<State2, Char>)
-		-> Nfa<UnionState<State1, State2>, Char>
+		-> Option<Nfa<UnionState<State1, State2>, Char>>
 	{
-		assert!(first.alphabet == second.alphabet, "Alphabets must be equal!");
+		if first.alphabet != second.alphabet { return None }
 
 		type StateSet<A, B> = HashSet<UnionState<A, B>>;
 		type Transition<A, B, Char> = HashMap<(UnionState<A, B>, Char), StateSet<A, B>>;
@@ -495,7 +497,7 @@ where
 		for state in &second.accepting {
 			accepting.insert(UnionState::Second(state.clone()));
 		}
-		Nfa
+		Some(Nfa
 			{ states
 			, alphabet: first.alphabet.clone()
 			, start_state: UnionState::Start
@@ -503,5 +505,6 @@ where
 			, epsilon_transitions
 			, accepting
 			}
+		)
 	}
 }

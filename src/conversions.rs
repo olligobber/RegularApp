@@ -84,35 +84,38 @@ where
 		}
 }
 
-pub fn regex_to_nfa<Char>(regex: &Regex<Char>, alphabet: HashSet<Char>) -> Nfa<u64, Char>
+pub fn regex_to_nfa<Char>(regex: &Regex<Char>, alphabet: HashSet<Char>)
+	-> Result<Nfa<u64, Char>, Char>
 where
 	Char: Eq + Hash + Clone
 {
 	match regex {
-		Regex::Empty => { Nfa::empty(alphabet).relabel_states() }
-		Regex::Epsilon => { Nfa::epsilon(alphabet).relabel_states() }
+		Regex::Empty => { Ok(Nfa::empty(alphabet).relabel_states()) }
+		Regex::Epsilon => { Ok(Nfa::epsilon(alphabet).relabel_states()) }
 		Regex::Character(char) =>
-			{ Nfa::character(alphabet, char.clone()).relabel_states() }
+			{ Nfa::character(alphabet, char.clone()).map(|n| n.relabel_states()) }
 		Regex::Concat(left, right) => {
-			let left_nfa = regex_to_nfa(left, alphabet.clone());
-			let right_nfa = regex_to_nfa(right, alphabet);
-			Nfa::concatenation(&left_nfa, &right_nfa).relabel_states()
+			let left_nfa = regex_to_nfa(left, alphabet.clone())?;
+			let right_nfa = regex_to_nfa(right, alphabet)?;
+			Ok(Nfa::concatenation(&left_nfa, &right_nfa).unwrap().relabel_states())
 		}
 		Regex::Union(left, right) => {
-			let left_nfa = regex_to_nfa(left, alphabet.clone());
-			let right_nfa = regex_to_nfa(right, alphabet);
-			Nfa::union(&left_nfa, &right_nfa).relabel_states()
+			let left_nfa = regex_to_nfa(left, alphabet.clone())?;
+			let right_nfa = regex_to_nfa(right, alphabet)?;
+			Ok(Nfa::union(&left_nfa, &right_nfa).unwrap().relabel_states())
 		}
 		Regex::Star(contents) => {
-			let contents_nfa = regex_to_nfa(contents, alphabet);
-			contents_nfa.star().relabel_states()
+			let contents_nfa = regex_to_nfa(contents, alphabet)?;
+			Ok(contents_nfa.star().relabel_states())
 		}
 	}
 }
 
-pub fn regex_to_dfa<Char>(regex: &Regex<Char>, alphabet: HashSet<Char>) -> Dfa<u64, Char>
+pub fn regex_to_dfa<Char>(regex: &Regex<Char>, alphabet: HashSet<Char>)
+	-> Result<Dfa<u64, Char>, Char>
 where
 	Char: Eq + Hash + Clone
 {
-	nfa_to_dfa(&regex_to_nfa(regex, alphabet)).relabel_states()
+	regex_to_nfa(regex, alphabet)
+		.map(|n| nfa_to_dfa(&n).relabel_states())
 }
